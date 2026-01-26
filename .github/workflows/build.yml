@@ -33,7 +33,6 @@ jobs:
         with:
           version: ${{ env.QT_VERSION }}
           cache: true
-          modules: qttools
 
       # Linux зависимости для Qt (минимальный набор, иногда нужно добавить)
       - name: Linux deps
@@ -119,4 +118,3 @@ jobs:
             *.zip
             *.dmg
             *.tar.gz
-  
