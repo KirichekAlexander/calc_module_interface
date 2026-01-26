@@ -1,0 +1,122 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  # Если хочешь релизы по тэгу:
+  # push:
+  #   tags:
+  #     - "v*"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, macos-14, ubuntu-22.04]
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      APP_NAME: calc_module_interface   # <-- поменяй на имя твоего target/exe
+      QT_VERSION: 6.7.2
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Qt (ставим qttools, чтобы были macdeployqt/windeployqt)
+      - name: Install Qt
+        id: qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          cache: true
+          modules: qttools
+
+      # Linux зависимости для Qt (минимальный набор, иногда нужно добавить)
+      - name: Linux deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential cmake ninja-build \
+            libgl1-mesa-dev \
+            libxkbcommon-x11-0 \
+            libxcb-cursor0 \
+            libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-xinerama0
+
+      - name: Configure (CMake)
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: |
+          cmake --build build --config Release
+
+      # -----------------------
+      # Packaging: Windows
+      # -----------------------
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item "build\${env:APP_NAME}.exe" "dist\" -Force
+
+          # windeployqt
+          & "${{ steps.qt.outputs.qt_dir }}\bin\windeployqt.exe" "dist\${env:APP_NAME}.exe"
+
+          Compress-Archive -Path dist\* -DestinationPath "${env:APP_NAME}-windows.zip" -Force
+
+      # -----------------------
+      # Packaging: macOS
+      # -----------------------
+      - name: Package (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          # В Qt6 при MACOSX_BUNDLE обычно получается .app в build/
+          # Поищем bundle:
+          APP_PATH="$(find build -maxdepth 2 -name "${APP_NAME}.app" -print -quit)"
+          if [ -z "$APP_PATH" ]; then
+            echo "Не найден ${APP_NAME}.app в build/. Проверь имя target (APP_NAME) и сборку MACOSX_BUNDLE."
+            exit 1
+          fi
+
+          # macdeployqt (+ dmg)
+          "${{ steps.qt.outputs.qt_dir }}/bin/macdeployqt" "$APP_PATH" -dmg
+
+          # dmg появляется рядом с .app
+          DMG_PATH="$(dirname "$APP_PATH")/${APP_NAME}.dmg"
+          if [ ! -f "$DMG_PATH" ]; then
+            # иногда имя может быть другое — найдём:
+            DMG_PATH="$(find "$(dirname "$APP_PATH")" -maxdepth 1 -name "*.dmg" -print -quit)"
+          fi
+          cp "$DMG_PATH" "./${APP_NAME}-macos.dmg"
+
+      # -----------------------
+      # Packaging: Linux (простая сборка в tar.gz)
+      # -----------------------
+      - name: Package (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp "build/${APP_NAME}" "dist/${APP_NAME}"
+
+          # Минимальный вариант: tar.gz (на разных дистрибутивах может не запуститься без библиотек)
+          tar -czf "${APP_NAME}-linux.tar.gz" -C dist .
+
+      # Upload artifacts
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-${{ runner.os }}
+          path: |
+            *.zip
+            *.dmg
+            *.tar.gz
+  
