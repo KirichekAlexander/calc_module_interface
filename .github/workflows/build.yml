@@ -67,7 +67,7 @@ jobs:
       # -----------------------
       # Packaging: Windows
       # -----------------------
-            - name: Package (Windows)
+      - name: Package (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
