@@ -4,29 +4,24 @@ on:
   push:
   pull_request:
   workflow_dispatch:
-  # Если хочешь релизы по тэгу:
-  # push:
-  #   tags:
-  #     - "v*"
 
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022, macos-14, ubuntu-22.04]
+        os: [windows-2022, macos-14]
 
     runs-on: ${{ matrix.os }}
 
     env:
-      APP_NAME: calc_module_interface   # <-- поменяй на имя твоего target/exe
+      APP_NAME: calc_module_interface
       QT_VERSION: 6.7.2
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Qt (ставим qttools, чтобы были macdeployqt/windeployqt)
       - name: Install Qt
         id: qt
         uses: jurplel/install-qt-action@v4
@@ -34,22 +29,36 @@ jobs:
           version: ${{ env.QT_VERSION }}
           cache: true
 
-      # Linux зависимости для Qt (минимальный набор, иногда нужно добавить)
-      - name: Linux deps
-        if: runner.os == 'Linux'
+      # ---- macOS: поставить deployment tools (macdeployqt) ----
+      # install-qt-action не всегда кладёт macdeployqt в qt_dir/bin на macOS,
+      # поэтому ставим "tools_qtcreator" НЕ надо; нужен именно deploy tool.
+      # Самый надёжный способ: искать macdeployqt и падать с понятной ошибкой.
+      - name: Locate macdeployqt (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential cmake ninja-build \
-            libgl1-mesa-dev \
-            libxkbcommon-x11-0 \
-            libxcb-cursor0 \
-            libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-xinerama0
+          echo "qt_dir=${{ steps.qt.outputs.qt_dir }}"
+          ls -la "${{ steps.qt.outputs.qt_dir }}/bin" || true
+
+          if [ -x "${{ steps.qt.outputs.qt_dir }}/bin/macdeployqt" ]; then
+            echo "MACDEPLOYQT=${{ steps.qt.outputs.qt_dir }}/bin/macdeployqt" >> $GITHUB_ENV
+            exit 0
+          fi
+
+          # fallback: иногда лежит глубже
+          FOUND="$(find "${{ steps.qt.outputs.qt_dir }}" -name macdeployqt -type f -perm +111 2>/dev/null | head -n 1)"
+          if [ -n "$FOUND" ]; then
+            echo "MACDEPLOYQT=$FOUND" >> $GITHUB_ENV
+            echo "Found macdeployqt at: $FOUND"
+            exit 0
+          fi
+
+          echo "macdeployqt not found in installed Qt. Need to install Qt deployment tools."
+          exit 1
 
       - name: Configure (CMake)
         run: |
-          cmake -S . -B build -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: |
@@ -63,9 +72,8 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force dist | Out-Null
-          Copy-Item "build\${env:APP_NAME}.exe" "dist\" -Force
+          Copy-Item "build\Release\${env:APP_NAME}.exe" "dist\" -Force -ErrorAction Stop
 
-          # windeployqt
           & "${{ steps.qt.outputs.qt_dir }}\bin\windeployqt.exe" "dist\${env:APP_NAME}.exe"
 
           Compress-Archive -Path dist\* -DestinationPath "${env:APP_NAME}-windows.zip" -Force
@@ -77,39 +85,31 @@ jobs:
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          # В Qt6 при MACOSX_BUNDLE обычно получается .app в build/
-          # Поищем bundle:
-          APP_PATH="$(find build -maxdepth 2 -name "${APP_NAME}.app" -print -quit)"
+          APP_PATH="$(find build -maxdepth 3 -name "${APP_NAME}.app" -print -quit)"
           if [ -z "$APP_PATH" ]; then
-            echo "Не найден ${APP_NAME}.app в build/. Проверь имя target (APP_NAME) и сборку MACOSX_BUNDLE."
+            echo "Не найден ${APP_NAME}.app в build/. Проверь имя target (APP_NAME) и MACOSX_BUNDLE."
+            find build -maxdepth 4 -type d -name "*.app" -print || true
             exit 1
           fi
 
-          # macdeployqt (+ dmg)
-          "${{ steps.qt.outputs.qt_dir }}/bin/macdeployqt" "$APP_PATH" -dmg
+          echo "Using app: $APP_PATH"
+          echo "Using macdeployqt: $MACDEPLOYQT"
 
-          # dmg появляется рядом с .app
+          "$MACDEPLOYQT" "$APP_PATH" -dmg
+
           DMG_PATH="$(dirname "$APP_PATH")/${APP_NAME}.dmg"
           if [ ! -f "$DMG_PATH" ]; then
-            # иногда имя может быть другое — найдём:
             DMG_PATH="$(find "$(dirname "$APP_PATH")" -maxdepth 1 -name "*.dmg" -print -quit)"
           fi
+
+          if [ -z "$DMG_PATH" ] || [ ! -f "$DMG_PATH" ]; then
+            echo "DMG не найден после macdeployqt."
+            ls -la "$(dirname "$APP_PATH")" || true
+            exit 1
+          fi
+
           cp "$DMG_PATH" "./${APP_NAME}-macos.dmg"
 
-      # -----------------------
-      # Packaging: Linux (простая сборка в tar.gz)
-      # -----------------------
-      - name: Package (Linux)
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          mkdir -p dist
-          cp "build/${APP_NAME}" "dist/${APP_NAME}"
-
-          # Минимальный вариант: tar.gz (на разных дистрибутивах может не запуститься без библиотек)
-          tar -czf "${APP_NAME}-linux.tar.gz" -C dist .
-
-      # Upload artifacts
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -117,4 +117,3 @@ jobs:
           path: |
             *.zip
             *.dmg
-            *.tar.gz
