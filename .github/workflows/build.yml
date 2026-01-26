@@ -67,16 +67,44 @@ jobs:
       # -----------------------
       # Packaging: Windows
       # -----------------------
-      - name: Package (Windows)
+            - name: Package (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force dist | Out-Null
-          Copy-Item "build\Release\${env:APP_NAME}.exe" "dist\" -Force -ErrorAction Stop
 
-          & "${{ steps.qt.outputs.qt_dir }}\bin\windeployqt.exe" "dist\${env:APP_NAME}.exe"
+          # exe обычно тут:
+          if (Test-Path "build\Release\${env:APP_NAME}.exe") {
+            Copy-Item "build\Release\${env:APP_NAME}.exe" "dist\" -Force
+          } elseif (Test-Path "build\${env:APP_NAME}.exe") {
+            Copy-Item "build\${env:APP_NAME}.exe" "dist\" -Force
+          } else {
+            Write-Host "Не найден exe. Содержимое build:"
+            Get-ChildItem -Recurse build | Select-Object FullName
+            exit 1
+          }
+
+          # Найдём windeployqt.exe внутри установленного Qt
+          $windeploy = Get-ChildItem -Path $env:RUNNER_TEMP -Recurse -Filter windeployqt.exe -ErrorAction SilentlyContinue |
+                       Select-Object -First 1
+
+          if (-not $windeploy) {
+            # fallback: поиск по диску aqt/Qt
+            $windeploy = Get-ChildItem -Path "D:\a" -Recurse -Filter windeployqt.exe -ErrorAction SilentlyContinue |
+                         Select-Object -First 1
+          }
+
+          if (-not $windeploy) {
+            Write-Host "windeployqt.exe не найден. Покажи переменные:"
+            Get-ChildItem env: | Sort-Object Name
+            exit 1
+          }
+
+          Write-Host "Using windeployqt: $($windeploy.FullName)"
+          & $windeploy.FullName "dist\${env:APP_NAME}.exe"
 
           Compress-Archive -Path dist\* -DestinationPath "${env:APP_NAME}-windows.zip" -Force
+
 
       # -----------------------
       # Packaging: macOS
