@@ -28,6 +28,8 @@ jobs:
         with:
           version: ${{ env.QT_VERSION }}
           cache: true
+          modules: qtcharts
+
 
       # ---- macOS: поставить deployment tools (macdeployqt) ----
       # install-qt-action не всегда кладёт macdeployqt в qt_dir/bin на macOS,
