@@ -18,6 +18,7 @@ qt_add_executable(calc_module_interface
     core/aux_module.h
     core/rhythmic_delivery.h
     core/pcplp.h
+    plotwindow.h plotwindow.cpp plotwindow.ui
 )
 
 target_include_directories(calc_module_interface PRIVATE
@@ -44,3 +45,12 @@ qt_generate_deploy_app_script(
     NO_UNSUPPORTED_PLATFORM_ERROR
 )
 install(SCRIPT ${deploy_script})
+
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Charts)
+
+target_link_libraries(calc_module_interface
+    PRIVATE
+        Qt::Core
+        Qt::Widgets
+        Qt::Charts
+)
