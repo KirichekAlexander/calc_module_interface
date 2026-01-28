@@ -6,144 +6,64 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-2022, macos-14]
-
-    runs-on: ${{ matrix.os }}
-
+  windows:
+    runs-on: windows-2022
     env:
       APP_NAME: calc_module_interface
-      QT_VERSION: 6.7.2
-
+      QT_VERSION: 5.15.2
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install Qt
-        id: qt
+      - name: Install Qt (Qt5)
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
           cache: true
           modules: qtcharts
 
-
-      # ---- macOS: поставить deployment tools (macdeployqt) ----
-      # install-qt-action не всегда кладёт macdeployqt в qt_dir/bin на macOS,
-      # поэтому ставим "tools_qtcreator" НЕ надо; нужен именно deploy tool.
-      # Самый надёжный способ: искать macdeployqt и падать с понятной ошибкой.
-      - name: Locate macdeployqt (macOS)
-        if: runner.os == 'macOS'
-        shell: bash
-        run: |
-          echo "qt_dir=${{ steps.qt.outputs.qt_dir }}"
-          ls -la "${{ steps.qt.outputs.qt_dir }}/bin" || true
-
-          if [ -x "${{ steps.qt.outputs.qt_dir }}/bin/macdeployqt" ]; then
-            echo "MACDEPLOYQT=${{ steps.qt.outputs.qt_dir }}/bin/macdeployqt" >> $GITHUB_ENV
-            exit 0
-          fi
-
-          # fallback: иногда лежит глубже
-          FOUND="$(find "${{ steps.qt.outputs.qt_dir }}" -name macdeployqt -type f -perm +111 2>/dev/null | head -n 1)"
-          if [ -n "$FOUND" ]; then
-            echo "MACDEPLOYQT=$FOUND" >> $GITHUB_ENV
-            echo "Found macdeployqt at: $FOUND"
-            exit 0
-          fi
-
-          echo "macdeployqt not found in installed Qt. Need to install Qt deployment tools."
-          exit 1
-
-      - name: Configure (CMake)
-        run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
-        run: |
-          cmake --build build --config Release
+        run: cmake --build build --config Release
 
-      # -----------------------
-      # Packaging: Windows
-      # -----------------------
       - name: Package (Windows)
-        if: runner.os == 'Windows'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force dist | Out-Null
 
-          # exe обычно тут:
-          if (Test-Path "build\Release\${env:APP_NAME}.exe") {
-            Copy-Item "build\Release\${env:APP_NAME}.exe" "dist\" -Force
-          } elseif (Test-Path "build\${env:APP_NAME}.exe") {
+          if (Test-Path "build\${env:APP_NAME}.exe") {
             Copy-Item "build\${env:APP_NAME}.exe" "dist\" -Force
+          } elseif (Test-Path "build\Release\${env:APP_NAME}.exe") {
+            Copy-Item "build\Release\${env:APP_NAME}.exe" "dist\" -Force
           } else {
-            Write-Host "Не найден exe. Содержимое build:"
             Get-ChildItem -Recurse build | Select-Object FullName
-            exit 1
+            throw "EXE not found"
           }
 
-          # Найдём windeployqt.exe внутри установленного Qt
-          $windeploy = Get-ChildItem -Path $env:RUNNER_TEMP -Recurse -Filter windeployqt.exe -ErrorAction SilentlyContinue |
-                       Select-Object -First 1
-
-          if (-not $windeploy) {
-            # fallback: поиск по диску aqt/Qt
-            $windeploy = Get-ChildItem -Path "D:\a" -Recurse -Filter windeployqt.exe -ErrorAction SilentlyContinue |
-                         Select-Object -First 1
-          }
-
-          if (-not $windeploy) {
-            Write-Host "windeployqt.exe не найден. Покажи переменные:"
-            Get-ChildItem env: | Sort-Object Name
-            exit 1
-          }
-
-          Write-Host "Using windeployqt: $($windeploy.FullName)"
-          & $windeploy.FullName "dist\${env:APP_NAME}.exe"
-
+          # QT_ROOT_DIR выставляет install-qt-action :contentReference[oaicite:3]{index=3}
+          & "$env:QT_ROOT_DIR\bin\windeployqt.exe" "dist\${env:APP_NAME}.exe"
           Compress-Archive -Path dist\* -DestinationPath "${env:APP_NAME}-windows.zip" -Force
 
-
-      # -----------------------
-      # Packaging: macOS
-      # -----------------------
-      - name: Package (macOS)
-        if: runner.os == 'macOS'
-        shell: bash
-        run: |
-          APP_PATH="$(find build -maxdepth 3 -name "${APP_NAME}.app" -print -quit)"
-          if [ -z "$APP_PATH" ]; then
-            echo "Не найден ${APP_NAME}.app в build/. Проверь имя target (APP_NAME) и MACOSX_BUNDLE."
-            find build -maxdepth 4 -type d -name "*.app" -print || true
-            exit 1
-          fi
-
-          echo "Using app: $APP_PATH"
-          echo "Using macdeployqt: $MACDEPLOYQT"
-
-          "$MACDEPLOYQT" "$APP_PATH" -dmg
-
-          DMG_PATH="$(dirname "$APP_PATH")/${APP_NAME}.dmg"
-          if [ ! -f "$DMG_PATH" ]; then
-            DMG_PATH="$(find "$(dirname "$APP_PATH")" -maxdepth 1 -name "*.dmg" -print -quit)"
-          fi
-
-          if [ -z "$DMG_PATH" ] || [ ! -f "$DMG_PATH" ]; then
-            echo "DMG не найден после macdeployqt."
-            ls -la "$(dirname "$APP_PATH")" || true
-            exit 1
-          fi
-
-          cp "$DMG_PATH" "./${APP_NAME}-macos.dmg"
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.APP_NAME }}-${{ runner.os }}
-          path: |
-            *.zip
-            *.dmg
+          name: windows
+          path: "*.zip"
+
+  astra:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Astra (Docker) + tar.gz
+        run: |
+          docker build -t astra-qt5 -f ci/astra/Dockerfile .
+          chmod +x ci/astra/build.sh
+          mkdir -p out
+          docker run --rm -v "$PWD:/src" -v "$PWD/out:/out" -w /src astra-qt5 bash -lc "./ci/astra/build.sh"
+          ls -la out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: astra-tar
+          path: out/*.tar.gz

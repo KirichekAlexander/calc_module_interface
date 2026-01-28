@@ -19,13 +19,17 @@ public:
 
 private slots:
 
-    void on_solveBtn_clicked();
-
-    void on_solveDirectBtn_clicked();
-
     void on_buildZkprBtn_clicked();
 
     void on_solveZkprBtn_clicked();
+
+    void on_rhBuildPBtn_clicked();
+    void on_rhSolveIterBtn_clicked();
+    void on_rhSolveDirectBtn_clicked();
+
+    void on_rhTestBtn_clicked();
+
+    void on_zkprTestBtn_clicked();
 
 private:
     Ui::MainWindow *ui;

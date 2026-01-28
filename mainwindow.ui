@@ -7,14 +7,14 @@
     <x>0</x>
     <y>0</y>
     <width>897</width>
-    <height>450</height>
+    <height>630</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout">
+   <layout class="QGridLayout" name="gridLayout_4">
     <item row="0" column="0">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
@@ -22,180 +22,277 @@
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
-        <string>Ритмичные поставки</string>
+        <string>Rhythmic deliveries</string>
        </attribute>
-       <layout class="QGridLayout" name="gridLayout_2">
-        <item row="0" column="0">
-         <widget class="QLabel" name="label">
-          <property name="text">
-           <string>V0</string>
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="2" column="0">
+         <widget class="QGroupBox" name="groupBox_2">
+          <property name="title">
+           <string>Result</string>
           </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QDoubleSpinBox" name="v0Spin">
-          <property name="maximum">
-           <double>10000000.000000000000000</double>
-          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_5">
+           <item>
+            <widget class="QTableWidget" name="rhResultTable"/>
+           </item>
+          </layout>
          </widget>
         </item>
         <item row="1" column="0">
-         <widget class="QLabel" name="label_2">
-          <property name="text">
-           <string>p</string>
-          </property>
-         </widget>
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <item>
+           <widget class="QPushButton" name="rhSolveIterBtn">
+            <property name="text">
+             <string>Solve (iterative method)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="rhSolveDirectBtn">
+            <property name="text">
+             <string>Solve (direct method)</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
-        <item row="1" column="1" colspan="2">
-         <widget class="QPlainTextEdit" name="pEdit">
-          <property name="minimumSize">
-           <size>
-            <width>385</width>
-            <height>0</height>
-           </size>
+        <item row="0" column="0">
+         <widget class="QGroupBox" name="groupBox">
+          <property name="title">
+           <string>Input</string>
           </property>
-         </widget>
-        </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="label_3">
-          <property name="text">
-           <string>minV</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <widget class="QDoubleSpinBox" name="minVSpin">
-          <property name="maximum">
-           <double>10000000.000000000000000</double>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="0">
-         <widget class="QLabel" name="label_4">
-          <property name="text">
-           <string>maxV</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="1">
-         <widget class="QDoubleSpinBox" name="maxVSpin">
-          <property name="maximum">
-           <double>100000000.000000000000000</double>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="0" colspan="2">
-         <widget class="QPushButton" name="solveBtn">
-          <property name="text">
-           <string>Решить итерационным процессом</string>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="2" rowspan="2">
-         <widget class="QTableWidget" name="resultTable"/>
-        </item>
-        <item row="5" column="0" colspan="2">
-         <widget class="QPushButton" name="solveDirectBtn">
-          <property name="text">
-           <string>Решить прямым методом</string>
-          </property>
-         </widget>
-        </item>
-        <item row="6" column="0">
-         <widget class="QLabel" name="statusLabel">
-          <property name="text">
-           <string>Готово</string>
-          </property>
+          <layout class="QGridLayout" name="gridLayout_10">
+           <item row="0" column="0">
+            <layout class="QVBoxLayout" name="verticalLayout_6">
+             <item>
+              <widget class="QPushButton" name="rhTestBtn">
+               <property name="text">
+                <string>Load test data</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <layout class="QGridLayout" name="gridLayout_2">
+               <item row="1" column="1">
+                <widget class="QDoubleSpinBox" name="rhV0Spin">
+                 <property name="maximum">
+                  <double>100000000.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="1">
+                <widget class="QDoubleSpinBox" name="rhMaxVSpin">
+                 <property name="maximum">
+                  <double>1000000.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="0">
+                <widget class="QLabel" name="label_2">
+                 <property name="text">
+                  <string>minV</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QSpinBox" name="rhNSpin">
+                 <property name="maximum">
+                  <number>100000000</number>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="0">
+                <widget class="QLabel" name="label_4">
+                 <property name="text">
+                  <string>N</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="0">
+                <widget class="QLabel" name="label_3">
+                 <property name="text">
+                  <string>V0</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="0">
+                <widget class="QLabel" name="label">
+                 <property name="text">
+                  <string>maxV</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="1">
+                <widget class="QDoubleSpinBox" name="rhMinVSpin">
+                 <property name="maximum">
+                  <double>100000000.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </item>
+           <item row="0" column="1">
+            <layout class="QGridLayout" name="gridLayout_3">
+             <item row="1" column="0">
+              <widget class="QTableWidget" name="rhPTable"/>
+             </item>
+             <item row="0" column="0">
+              <widget class="QPushButton" name="rhBuildPBtn">
+               <property name="text">
+                <string>Build demand table (enter N)</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
          </widget>
         </item>
        </layout>
       </widget>
       <widget class="QWidget" name="tab_2">
        <attribute name="title">
-        <string>ЗКПР</string>
+        <string>RCPSP</string>
        </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout">
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout">
-          <item>
-           <widget class="QLabel" name="label_5">
-            <property name="text">
-             <string>N</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QSpinBox" name="nSpin">
-            <property name="maximum">
-             <number>10000000</number>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_6">
-            <property name="text">
-             <string>M</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QSpinBox" name="mSpin">
-            <property name="maximum">
-             <number>100000000</number>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <widget class="QTableWidget" name="jobsTable">
-          <column>
-           <property name="text">
-            <string>dur</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>rel</string>
-           </property>
-          </column>
+       <layout class="QGridLayout" name="gridLayout_5">
+        <item row="0" column="0">
+         <widget class="QGroupBox" name="groupBox_3">
+          <property name="title">
+           <string>Input</string>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout">
+           <item>
+            <layout class="QFormLayout" name="formLayout">
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_5">
+               <property name="text">
+                <string>N</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QSpinBox" name="nSpin">
+               <property name="maximum">
+                <number>100000000</number>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_6">
+               <property name="text">
+                <string>M</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QSpinBox" name="mSpin">
+               <property name="maximum">
+                <number>10000000</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QPushButton" name="buildZkprBtn">
+             <property name="text">
+              <string>Build input tables(enter N and M)</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="zkprTestBtn">
+             <property name="text">
+              <string>Load test data</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </widget>
         </item>
-        <item>
-         <widget class="QTableWidget" name="capTable"/>
-        </item>
-        <item>
-         <widget class="QTableWidget" name="demandsTable"/>
-        </item>
-        <item>
-         <widget class="QTableWidget" name="predsTable">
-          <column>
-           <property name="text">
-            <string>preds</string>
-           </property>
-          </column>
+        <item row="1" column="0">
+         <widget class="QTabWidget" name="tabWidget_2">
+          <property name="currentIndex">
+           <number>2</number>
+          </property>
+          <widget class="QWidget" name="tab_3">
+           <attribute name="title">
+            <string>Duration / release / resources</string>
+           </attribute>
+           <layout class="QGridLayout" name="gridLayout_9">
+            <item row="0" column="0">
+             <widget class="QTableWidget" name="jobsTable">
+              <column>
+               <property name="text">
+                <string>dur</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>rel</string>
+               </property>
+              </column>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QGroupBox" name="groupBox_4">
+              <property name="title">
+               <string>resources</string>
+              </property>
+              <layout class="QGridLayout" name="gridLayout_6">
+               <item row="0" column="0">
+                <widget class="QTableWidget" name="capTable"/>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="tab_4">
+           <attribute name="title">
+            <string>Demands</string>
+           </attribute>
+           <layout class="QGridLayout" name="gridLayout_8">
+            <item row="0" column="0">
+             <widget class="QTableWidget" name="demandsTable"/>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="tab_5">
+           <attribute name="title">
+            <string>Predecessors</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout">
+            <item>
+             <widget class="QTableWidget" name="predsTable">
+              <column>
+               <property name="text">
+                <string>preds</string>
+               </property>
+              </column>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="tab_6">
+           <attribute name="title">
+            <string>Result</string>
+           </attribute>
+           <layout class="QGridLayout" name="gridLayout_7">
+            <item row="0" column="0">
+             <widget class="QTableWidget" name="scheduleTable"/>
+            </item>
+           </layout>
+          </widget>
          </widget>
         </item>
-        <item>
-         <widget class="QTableWidget" name="scheduleTable"/>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_2">
-          <item>
-           <widget class="QPushButton" name="buildZkprBtn">
-            <property name="text">
-             <string>buildZkprBtn</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="solveZkprBtn">
-            <property name="text">
-             <string>solveZkprBtn</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
+        <item row="2" column="0">
+         <widget class="QPushButton" name="solveZkprBtn">
+          <property name="text">
+           <string>Solve</string>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -203,23 +300,12 @@
     </item>
    </layout>
   </widget>
-  <widget class="QMenuBar" name="menubar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>897</width>
-     <height>37</height>
-    </rect>
-   </property>
-   <widget class="QMenu" name="menu">
-    <property name="title">
-     <string>Расчётный модуль</string>
-    </property>
-   </widget>
-   <addaction name="menu"/>
-  </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionC">
+   <property name="text">
+    <string>C</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
